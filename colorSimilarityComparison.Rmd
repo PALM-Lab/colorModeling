@@ -9,9 +9,9 @@ output: html_document
 
 This file is associated with the preprint titled ["Similarity judgments and visual working memory do not share the same cognitive representation"](https://osf.io/preprints/psyarxiv/fm9vz_v1) by William XQ Ngiam (Adelaide University) and Michael D Lee (University of California Irvine. This research project models the underlying psychological space in perceptual tasks, working memory tasks, and similarity judgment tasks.
 
-The following model recovers the underlying psychological space for the orientation **similarity comparison** task in [Tomic and Bays (2024)](https://psycnet.apa.org/doi/10.1037/xlm0001172). In this task, two pairs of oriented lines (each randomly sampled from 0 to 180 degrees in 5 degree increments) is shown to the subject. The subject is asked which pair is more similar.
+The following model recovers the underlying psychological space for the orientation **similarity comparison** task in [Tomic and Bays (2024)](https://psycnet.apa.org/doi/10.1037/xlm0001172). In this task, two pairs of color hues (each randomly sampled from 0 to 360 degrees in 5 degree increments from the CIE Lab space, a = 20, b = 20, radius = 50) is shown to the subject. The subject is asked which pair is more similar.
 
-The following code builds a Bayesian Thurstonian model using JAGS. The underlying Thurstonian model is an attempt to recover the representation (much like multidimensional scaling) of the orientations. Then, this model could be used to predict performance on other tasks; such as a working memory task with these orientations. 
+The following code builds a Bayesian Thurstonian model using JAGS. The underlying Thurstonian model is an attempt to recover the representation (much like multidimensional scaling) of the colors Then, this model could be used to predict performance on other tasks; such as a working memory task with these orientations. 
 
 ### Requirements
 
@@ -19,6 +19,7 @@ The following files should be saved in your working directory:
 
 * The data file ("colorSimData_clean.csv") - [downloadable here](https://github.com/WilliamNgiam/orientationModeling/blob/main/data/colorSimData_clean.csv).
 * The model text file ("colorSimilarityComparison_jags.txt") - [downloadable here](https://github.com/WilliamNgiam/orientationModeling/blob/main/similarityComparison/similarityComparison_jags.txt).
+* The color values file ("colorRGBvalues.csv") - [downloadable here](https://github.com/WilliamNgiam/colorModeling/blob/main/colorRGBvalues.csv)
 
 You will also need to have installed JAGS on your device. The installer can be accessed here: [https://sourceforge.net/projects/mcmc-jags/files/]. This code was built using JAGS 4.3.2.
 
@@ -35,21 +36,22 @@ library(ggmcmc) # v1.5.1.2
 sessionInfo()
 
 # Set RNG seed for reproducibility
-set.seed(42)
+set.seed(10)
 ```
 
 ### Load data
 
 ```{r read data, warning = FALSE, message = FALSE}
 # Load in Tomic and Bays (2024) dataset
-simData <- read_csv(paste0(getwd(),"/color data/colorSimData_clean.csv"))
+simData <- read_csv(paste0(getwd(),"/data/colorSimData_clean.csv"))
 
 # Create intervals to match the Tomic and Bays (2024) perceptual task.
-oriVals <- seq(0,2*pi,length.out = 73) # The orientation values in the dataset
+colorVals <- seq(0,2*pi,length.out = 73) # The orientation values in the dataset
 
 simData <- simData %>% 
   rowwise() %>% 
-  mutate(across(starts_with("pair"), ~ which.min(abs(.x-oriVals)),
+  mutate(across(starts_with("pair"), ~ .x+pi)) %>% 
+  mutate(across(starts_with("pair"), ~ which.min(abs(.x-colorVals)),
                 .names = "{col}_idx"))
 
 # Assign data to vectors
@@ -106,7 +108,7 @@ bayes.mod.fit <- jags(data = data.jags,
                       n.iter = 8000,
                       n.burnin = 2000,
                       n.thin = 10,
-                      model.file = paste0(getwd(),"/colorSimilarityComparison_jags.txt"))
+                      model.file = paste0(getwd(),"/models/colorSimilarityComparison_jags.txt"))
 
 ```
 ### Evaluate model

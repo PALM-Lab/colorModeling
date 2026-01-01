@@ -1,5 +1,5 @@
 ---
-title: "Ngiam and Lee (2026) - memoryReproduction"
+title: "Ngiam - colorMemoryReproduction"
 author: "William XQ Ngiam"
 date: "`r Sys.Date()`"
 output: html_document
@@ -9,9 +9,9 @@ output: html_document
 
 This file is associated with the preprint titled ["Similarity judgments and visual working memory do not share the same cognitive representation"](https://osf.io/preprints/psyarxiv/fm9vz_v1) by William XQ Ngiam (Adelaide University) and Michael D Lee (University of California Irvine). This research project models the cognitive representation underlying perceptual tasks, working memory tasks, and similarity judgment tasks.
 
-The following model recovers the underlying psychological space for the orientation **memory reproduction** task in [Tomic and Bays (2024)](https://psycnet.apa.org/doi/10.1037/xlm0001172). In this task, either three or six colors (randomly sampled from 0 to 360 degrees in CIELab space (L = 50, a = 20, b = 20, radius = 60)) is shown to the subject. The subject is probed to recall the orientation of one of the shown lines, and has to reproduce the orientation as closely as possible.
+The following model recovers the underlying psychological space for the color **memory reproduction** task in [Tomic and Bays (2024)](https://psycnet.apa.org/doi/10.1037/xlm0001172). In this task, either three or six colors (randomly sampled from 0 to 360 degrees in CIELab space (L = 50, a = 20, b = 20, radius = 60)) is shown to the subject. The subject is probed to recall the color of one of the shown lines, and has to reproduce the color as closely as possible.
 
-The following code builds a Bayesian Thurstonian model using JAGS, recovering the latent representation of the orientations. This memory model **includes swap errors** - that the subject may erroneously reproduce the orientation of a non-target item in the array. A memory model that does not include swap errors is included in the original manuscript; this code can be easily adjusted to run that model.
+The following code builds a Bayesian Thurstonian model using JAGS, recovering the latent representation of the colors. This memory model **includes swap errors** - that the subject may erroneously reproduce the color of a non-target item in the array. A memory model that does not include swap errors is included in the original manuscript; this code can be easily adjusted to run that model.
 
 ### Requirements
 
@@ -19,6 +19,7 @@ The following files should be saved in your working directory:
 
 * The data file ("colorWMData_clean.csv") - [downloadable here](https://github.com/WilliamNgiam/orientationModeling/blob/main/data/oriWMData_clean.csv).
 * The model text file ("colorMemoryReproduction_jags.txt") - [downloadable here](https://github.com/WilliamNgiam/orientationModeling/blob/main/memoryReproduction/memoryReproduction_jags.txt).
+* The color values file ("colorRGBvalues.csv") - [downloadable here](https://github.com/WilliamNgiam/colorModeling/blob/main/colorRGBvalues.csv)
 
 You will also need to have installed JAGS on your device. The installer can be accessed here: [https://sourceforge.net/projects/mcmc-jags/files/]. The following code was built using JAGS 4.3.2.
 
@@ -45,7 +46,7 @@ knitr::opts_chunk$set(comment = NA)
 
 ```{r read data, warning = FALSE, message = FALSE}
 # Load in Tomic and Bays (2024) dataset
-memData <- read_csv(paste0(getwd(),"/color data/colorWMData_clean.csv"))
+memData <- read_csv(paste0(getwd(),"/data/colorWMData_clean.csv"))
 
 # Create intervals to match the Tomic and Bays (2024) perceptual task.
 binIntervals = seq(-pi,pi,length.out = 73)
@@ -107,7 +108,7 @@ bayes.mod.params <- c("mu","sigma", "omega3", "omega6")
 
 # Set initial values
 bayes.mod.inits <- function() {
-  list("sigma" = runif(1)*2*pi)
+  list("sigma" = runif(2,0,2*pi))
 }
 ```
 
@@ -122,7 +123,7 @@ bayes.mod.fit <- jags(data = data.jags,
                       n.iter = 20000,
                       n.burnin = 2000,
                       n.thin = 10,
-                      model.file = paste0(getwd(),"/colorMemoryReproduction_jags.txt"))
+                      model.file = paste0(getwd(),"/models/colorMemoryReproduction_jags.txt"))
 
 ```
 ### Evaluate model
@@ -171,7 +172,8 @@ ggplot(data = catdata) +
                            y = Parameter),
              colour = catdata$color) +
   theme(aspect_ratio = 1) +
-  theme_minimal()
+  theme_minimal() +
+  scale_x_continuous(limits = c(0,2*pi))
 
 ggs_density(bayes.mod.fit.gg,
             family = "omega3")
