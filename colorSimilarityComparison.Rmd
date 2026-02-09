@@ -36,7 +36,7 @@ library(ggmcmc) # v1.5.1.2
 sessionInfo()
 
 # Set RNG seed for reproducibility
-set.seed(10)
+set.seed(2026)
 ```
 
 ### Load data
@@ -46,7 +46,7 @@ set.seed(10)
 simData <- read_csv(paste0(getwd(),"/data/colorSimData_clean.csv"))
 
 # Create intervals to match the Tomic and Bays (2024) perceptual task.
-colorVals <- seq(0,2*pi,length.out = 73) # The orientation values in the dataset
+colorVals <- seq(0,2*pi,length.out = 73) # The color values in the dataset
 
 simData <- simData %>% 
   rowwise() %>% 
